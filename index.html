@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/octicons/8.5.0/build.css"
+      integrity="sha512-oXqkIy/+iqrHrpoTwFkSLZJpNwoYn9e77QtCNzBi+Jb6uJgTtcdHVy0C+nEpeUfC3fxSbydPxLG+ndikNVvrdQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>GitHub Profile Viewer</title>
+    <style>
+      body {
+        padding: 20px;
+      }
+
+      .repo-card {
+        margin-bottom: 20px;
+      }
+
+      .github-link {
+        color: #0366d6;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+      }
+
+      .github-link:hover {
+        text-decoration: underline;
+      }
+
+      .github-link .octicon {
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <form id="githubForm">
+        <div class="form-group">
+          <label for="githubUsername">GitHub Username:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="githubUsername"
+            placeholder="Enter your GitHub username"
+            required
+          />
+        </div>
+        <button type="button" class="btn btn-primary" onclick="getData()">
+          Submit
+        </button>
+      </form>
+
+      <div class="text-center">
+        <img class="rounded-circle img-thumbnail" id="avatar_img" width="150" />
+        <h2 class="mt-3" id="userName"></h2>
+        <a href="#" class="github-link" target="_blank" id="profileLink"></a>
+      </div>
+
+      <h3 class="mt-5">Public Repositories</h3>
+      <div id="repos" class="row"></div>
+      <div id="loading" class="text-center mt-3" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+          <span>Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const getData = () => {
+        let username = document.getElementById("githubUsername").value;
+        let avatar = "";
+        if (username) {
+          document.getElementById("userName").innerHTML = "";
+          document.getElementById("avatar_img").src = "";
+          const reposContainer = document.getElementById("repos");
+          while (reposContainer.firstChild) {
+            reposContainer.removeChild(reposContainer.firstChild);
+          }
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("loading").style.display = "block";
+          setTimeout(() => {
+            const apiUrl = `https://api.github.com/users/${username}/repos`;
+            console.log(apiUrl);
+            fetch(apiUrl)
+              .then((response) => response.json())
+              .then((repos) => {
+                const reposContainer = document.getElementById("repos");
+                while (reposContainer.firstChild) {
+                  reposContainer.removeChild(reposContainer.firstChild);
+                }
+                const numberOfPage= repos.length/6;
+                repos.forEach((repo) => {
+                  const repoCard = document.createElement("div");
+                  avatar = repo.owner.avatar_url;
+                  const ownerUsername = repo.owner.login;
+                  repoCard.className = "col-md-4 repo-card";
+                  repoCard.innerHTML = `
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">${repo.name}</h5>
+                      <p class="card-text">${
+                        repo.description || "No description available."
+                      }</p>
+                      <a href="${
+                        repo.html_url
+                      }" class="btn btn-primary" target="_blank">View on GitHub</a>
+                    </div>
+                    <div>
+                      ${repo.topics
+                        .map(
+                          (topic) =>
+                            `<button class="btn btn-primary text-light p-1 mb-2 ml-2 rounded">${topic}</button>`
+                        )
+                        .join("")}
+                    </div>
+                  </div>
+                `;
+                  document.getElementById("avatar_img").src = avatar;
+                  document.getElementById("userName").innerHTML = ownerUsername;
+                  document.getElementById("profileLink").href =
+                    repo.owner.html_url;
+                  document.getElementById(
+                    "profileLink"
+                  ).innerHTML = `🔗 ${repo.owner.html_url}`;
+                  reposContainer.appendChild(repoCard);
+                });
+              })
+              .catch((error) =>
+                console.error("Error fetching repositories:", error)
+              )
+              .finally(() => {
+                document.getElementById("loading").style.display = "none"; // Hide loading after data is loaded
+              });
+          }, 500);
+        } else {
+          document.getElementById("userName").innerHTML = "";
+          document.getElementById("avatar_img").src = "";
+          const reposContainer = document.getElementById("repos");
+          while (reposContainer.firstChild) {
+            reposContainer.removeChild(reposContainer.firstChild);
+          }
+          document.getElementById("loading").style.display = "none";
+        }
+      };
+    </script>
+  </body>
+</html>
